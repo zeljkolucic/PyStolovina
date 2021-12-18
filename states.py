@@ -73,3 +73,4 @@ class GameState:
         agent.apply_action(action)
         state.last_agent_played_id = agent_id
         return state
+
