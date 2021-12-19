@@ -187,8 +187,8 @@ class ExpectAgent(StudentAgent):
                 best_action = None
                 for action in actions:
                     new_state = state.apply_action(agent.id, action)
-                    number_of_min_agent_actions = len(new_state.get_legal_actions(last_agent_played_id))
-                    if score < 8 - number_of_min_agent_actions:
+                    number_of_min_agent_actions = 8 - len(new_state.get_legal_actions(last_agent_played_id))
+                    if score < number_of_min_agent_actions:
                         score = number_of_min_agent_actions
                         best_action = action
                 return best_action, score
@@ -197,21 +197,20 @@ class ExpectAgent(StudentAgent):
                 best_action = None
                 for action in actions:
                     new_state = state.apply_action(agent.id, action)
-                    number_of_max_agent_actions = len(new_state.get_legal_actions(last_agent_played_id))
-                    score += number_of_max_agent_actions - 8
+                    expectimax_action, expectimax_score = self.expectimax(new_state, max_levels - 1)
+                    score += expectimax_score
                 score = score * 1.0 / len(actions)
-                best_action = agent.last_action
+                best_action = actions[random.randint(0, len(actions) - 1)]
                 return best_action, score
 
         if agent.id == self.id:
+            score = -math.inf
             for action in actions:
-                score = -math.inf
                 new_state = state.apply_action(agent.id, action)
                 expectimax_action, expectimax_score = self.expectimax(new_state, max_levels - 1)
                 if score < expectimax_score:
                     score = expectimax_score
                     best_action = action
-            print(f"Best action: {best_action}, score: {score}")
             return best_action, score
         else:
             score = 0
@@ -221,7 +220,7 @@ class ExpectAgent(StudentAgent):
                 expectimax_action, expectimax_score = self.expectimax(new_state, max_levels - 1)
                 score += expectimax_score
             score = score * 1.0 / len(actions)
-            best_action = agent.last_action
+            best_action = actions[random.randint(0, len(actions) - 1)]
             return best_action, score
 
 
