@@ -41,17 +41,21 @@ class MinimaxAgent(StudentAgent):
         return action
 
     def minimax(self, state, max_levels, player):
-        agent_id = self.id if state.last_agent_played_id != self.id else \
-            list(filter(lambda agent: agent.id != self.id, state.agents))[0].id
-        actions = state.get_legal_actions(agent_id)
+        agents = state.agents
+        last_agent_played_id = len(agents) - 1 if state.last_agent_played_id is None else state.last_agent_played_id
+        agent = agents[(last_agent_played_id + 1) % len(agents)]
+        actions = state.get_legal_actions(agent.id)
+
+        if len(actions) == 0:
+            return None, 100 if player == Player.MIN else -100
 
         if max_levels == 0:
             if player == Player.MAX:
                 score = -math.inf
                 best_action = None
                 for action in actions:
-                    new_state = state.apply_action(agent_id, action)
-                    number_of_min_agent_actions = len(new_state.get_legal_actions(state.last_agent_played_id))
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_min_agent_actions = 8 - len(new_state.get_legal_actions(last_agent_played_id))
                     if score < number_of_min_agent_actions:
                         score = number_of_min_agent_actions
                         best_action = action
@@ -60,21 +64,18 @@ class MinimaxAgent(StudentAgent):
                 score = math.inf
                 best_action = None
                 for action in actions:
-                    new_state = state.apply_action(agent_id, action)
-                    number_of_max_agent_actions = len(new_state.get_legal_actions(state.last_agent_played_id))
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_max_agent_actions = len(new_state.get_legal_actions(last_agent_played_id)) - 8
                     if score > number_of_max_agent_actions:
                         score = number_of_max_agent_actions
                         best_action = action
                 return best_action, score
 
-        if len(actions) == 0:
-            return None, 1 if player == Player.MIN else -1
-
         if player == Player.MAX:
             score = -math.inf
             best_action = None
             for action in actions:
-                new_state = state.apply_action(agent_id, action)
+                new_state = state.apply_action(agent.id, action)
                 minimax_action, minimax_score = self.minimax(new_state, max_levels - 1, Player.MIN)
                 if score < minimax_score:
                     score = minimax_score
@@ -84,7 +85,7 @@ class MinimaxAgent(StudentAgent):
             score = math.inf
             best_action = None
             for action in actions:
-                new_state = state.apply_action(agent_id, action)
+                new_state = state.apply_action(agent.id, action)
                 minimax_action, minimax_score = self.minimax(new_state, max_levels - 1, Player.MAX)
                 if score > minimax_score:
                     score = minimax_score
@@ -101,54 +102,47 @@ class MinimaxABAgent(StudentAgent):
         return action
 
     def minimax(self, state, max_levels, player, alpha, beta):
-        agent_id = self.id if state.last_agent_played_id != self.id else \
-            list(filter(lambda agent: agent.id != self.id, state.agents))[0].id
-        print(f"Agent id: {agent_id}")
-        actions = state.get_legal_actions(agent_id)
-        print(f"Agent actions: {actions}")
+        agents = state.agents
+        last_agent_played_id = len(agents) - 1 if state.last_agent_played_id is None else state.last_agent_played_id
+        agent = agents[(last_agent_played_id + 1) % len(agents)]
+        actions = state.get_legal_actions(agent.id)
+
+        if len(actions) == 0:
+            return None, 100 if player == Player.MIN else -100
 
         if max_levels == 0:
             if player == Player.MAX:
-                print("MAX player on level 0")
                 score = -math.inf
                 best_action = None
                 for action in actions:
-                    new_state = state.apply_action(agent_id, action)
-                    number_of_min_agent_actions = len(new_state.get_legal_actions(state.last_agent_played_id))
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_min_agent_actions = 8 - len(new_state.get_legal_actions(last_agent_played_id))
                     if score < number_of_min_agent_actions:
                         score = number_of_min_agent_actions
                         best_action = action
                     alpha = max(alpha, score)
                     if alpha >= beta:
                         break
-                print(f"MAX player on level 0 with score: {score}")
                 return best_action, score
             else:
-                print("MIN player on level 0")
                 score = math.inf
                 best_action = None
                 for action in actions:
-                    new_state = state.apply_action(agent_id, action)
-                    number_of_max_agent_actions = len(new_state.get_legal_actions(state.last_agent_played_id))
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_max_agent_actions = len(new_state.get_legal_actions(last_agent_played_id)) - 8
                     if score > number_of_max_agent_actions:
                         score = number_of_max_agent_actions
                         best_action = action
                     beta = min(beta, score)
                     if alpha >= beta:
                         break
-                print(f"MIN player on level 0 with score: {score}")
                 return best_action, score
 
-        if len(actions) == 0:
-            print(f"Player {player} has no more actions to choose")
-            return None, 1 if player == Player.MIN else -1
-
         if player == Player.MAX:
-            print(f"Player MAX on the move")
             score = -math.inf
             best_action = None
             for action in actions:
-                new_state = state.apply_action(agent_id, action)
+                new_state = state.apply_action(agent.id, action)
                 minimax_action, minimax_score = self.minimax(new_state, max_levels - 1, Player.MIN, alpha, beta)
                 if score < minimax_score:
                     score = minimax_score
@@ -156,14 +150,12 @@ class MinimaxABAgent(StudentAgent):
                 alpha = max(alpha, score)
                 if alpha >= beta:
                     break
-            print(f"Player MAX with action: {best_action} and score: {score}")
             return best_action, score
         else:
-            print("Player MIN on the move")
             score = math.inf
             best_action = None
             for action in actions:
-                new_state = state.apply_action(agent_id, action)
+                new_state = state.apply_action(agent.id, action)
                 minimax_action, minimax_score = self.minimax(new_state, max_levels - 1, Player.MAX, alpha, beta)
                 if score > minimax_score:
                     score = minimax_score
@@ -171,17 +163,126 @@ class MinimaxABAgent(StudentAgent):
                 beta = min(beta, score)
                 if alpha >= beta:
                     break
-            print(f"Player MIN with action: {best_action} and score: {score}")
             return best_action, score
 
 
 class ExpectAgent(StudentAgent):
 
     def get_next_action(self, state, max_levels):
-        pass
+        action, score = self.expectimax(state, max_levels)
+        return action
+
+    def expectimax(self, state, max_levels):
+        agents = state.agents
+        last_agent_played_id = len(agents) - 1 if state.last_agent_played_id is None else state.last_agent_played_id
+        agent = agents[(last_agent_played_id + 1) % len(agents)]
+        actions = state.get_legal_actions(agent.id)
+
+        if len(actions) == 0:
+            return None, -100 if agent.id == self.id else 100
+
+        if max_levels == 0:
+            if agent.id == self.id:
+                score = -math.inf
+                best_action = None
+                for action in actions:
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_min_agent_actions = len(new_state.get_legal_actions(last_agent_played_id))
+                    if score < 8 - number_of_min_agent_actions:
+                        score = number_of_min_agent_actions
+                        best_action = action
+                return best_action, score
+            else:
+                score = 0
+                best_action = None
+                for action in actions:
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_max_agent_actions = len(new_state.get_legal_actions(last_agent_played_id))
+                    score += number_of_max_agent_actions - 8
+                score = score * 1.0 / len(actions)
+                best_action = agent.last_action
+                return best_action, score
+
+        if agent.id == self.id:
+            for action in actions:
+                score = -math.inf
+                new_state = state.apply_action(agent.id, action)
+                expectimax_action, expectimax_score = self.expectimax(new_state, max_levels - 1)
+                if score < expectimax_score:
+                    score = expectimax_score
+                    best_action = action
+            print(f"Best action: {best_action}, score: {score}")
+            return best_action, score
+        else:
+            score = 0
+            best_action = None
+            for action in actions:
+                new_state = state.apply_action(agent.id, action)
+                expectimax_action, expectimax_score = self.expectimax(new_state, max_levels - 1)
+                score += expectimax_score
+            score = score * 1.0 / len(actions)
+            best_action = agent.last_action
+            return best_action, score
 
 
 class MaxNAgent(StudentAgent):
 
     def get_next_action(self, state, max_levels):
-        pass
+        action, score = self.minimax(state, max_levels)
+        return action
+
+    def minimax(self, state, max_levels):
+        agents = state.agents
+        last_played_agent_id = len(agents) - 1 if state.last_agent_played_id is None else state.last_agent_played_id
+        agent = agents[(last_played_agent_id + 1) % len(agents)]
+        while not agent.is_active():
+            agent = agents[(agent.id + 1) % len(agents)]
+        actions = state.get_legal_actions(agent.id)
+
+        if len(actions) == 0:
+            return None, -100 if agent.id == self.id else 100
+
+        if max_levels == 0:
+            if agent.id == self.id:
+                score = -math.inf
+                best_action = None
+                for action in actions:
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_min_agents_actions = 16 - len(new_state.get_legal_actions(agents[(agent.id + 1) % len(agents)].id)) + len(new_state.get_legal_actions(agents[(agent.id + 2) % len(agents)].id))
+                    if score < number_of_min_agents_actions:
+                        score = number_of_min_agents_actions
+                        best_action = action
+                return best_action, score
+            else:
+                score = math.inf
+                best_action = None
+                for action in actions:
+                    new_state = state.apply_action(agent.id, action)
+                    number_of_max_agent_actions = len(new_state.get_legal_actions(agents[(agent.id + 1) % len(agents)].id)) + len(new_state.get_legal_actions(agents[(agent.id + 2) % len(agents)].id)) - 16
+                    if score > number_of_max_agent_actions:
+                        score = number_of_max_agent_actions
+                        best_action = action
+                return best_action, score
+
+        if agent.id == self.id:
+            score = -math.inf
+            best_action = None
+            for action in actions:
+                new_state = state.apply_action(agent.id, action)
+                minimax_action, minimax_score = self.minimax(new_state, max_levels - 1)
+                if score < minimax_score:
+                    score = minimax_score
+                    best_action = action
+            return best_action, score
+        else:
+            score = math.inf
+            best_action = None
+            for action in actions:
+                new_state = state.apply_action(agent.id, action)
+                minimax_action, minimax_score = self.minimax(new_state, max_levels - 1)
+                if score > minimax_score:
+                    score = minimax_score
+                    best_action = action
+            return best_action, score
+
+
